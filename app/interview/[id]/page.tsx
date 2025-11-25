@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecoilState } from 'recoil';
@@ -18,7 +20,7 @@ interface InterviewPageProps {
   params: { id: string };
 }
 
-export default function InterviewPage({ params }: InterviewPageProps) {
+function InterviewPage({ params }: InterviewPageProps) {
   const [currentInterview, setCurrentInterview] = useRecoilState(currentInterviewState);
   const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
@@ -181,3 +183,7 @@ export default function InterviewPage({ params }: InterviewPageProps) {
     </AuthGuard>
   );
 }
+
+export default dynamic(() => Promise.resolve(InterviewPage), {
+  ssr: false,
+});

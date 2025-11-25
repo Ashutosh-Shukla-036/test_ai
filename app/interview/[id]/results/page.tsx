@@ -1,5 +1,7 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecoilState } from 'recoil';
@@ -17,7 +19,7 @@ interface ResultsPageProps {
   params: { id: string };
 }
 
-export default function ResultsPage({ params }: ResultsPageProps) {
+function ResultsPage({ params }: ResultsPageProps) {
   const [currentInterview, setCurrentInterview] = useRecoilState(currentInterviewState);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -257,3 +259,7 @@ export default function ResultsPage({ params }: ResultsPageProps) {
     </AuthGuard>
   );
 }
+
+export default dynamic(() => Promise.resolve(ResultsPage), {
+  ssr: false,
+});
