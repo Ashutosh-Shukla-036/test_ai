@@ -7,7 +7,7 @@ import { currentInterviewState } from '@/store/atoms';
 import AuthGuard from '@/components/AuthGuard';
 import VideoInterviewInterface from '@/components/VideoInterviewInterface';
 import {
-  generateProjectQuestionsGuaranteed,     // <-- USE THIS INSTEAD
+  generateProjectQuestionsGuaranteed,
   InterviewQuestion,
   Project,
   AnswerAnalysis
@@ -31,14 +31,16 @@ export default function InterviewPage({ params }: InterviewPageProps) {
     if (!currentInterview || currentInterview.id !== params.id) {
       fetchInterview();
     } else {
-      setProjects(currentInterview.skills?.projects || []);
+      const safeProjects = Array.isArray(currentInterview?.skills?.projects) ? currentInterview.skills.projects : [];
+      setProjects(safeProjects);
       setIsLoading(false);
     }
   }, [params.id, currentInterview]);
 
   // ===== Generate & Guarantee Questions =====
   useEffect(() => {
-    if (questions.length === 0) {
+    // ➤ Only run when projects are valid AND questions are not generated
+    if (Array.isArray(projects) && projects.length > 0 && questions.length === 0) {
       setIsGeneratingQuestions(true);
 
       generateProjectQuestionsGuaranteed(projects)
@@ -60,9 +62,10 @@ export default function InterviewPage({ params }: InterviewPageProps) {
   // ===== Fetch Interview =====
   const fetchInterview = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
       const response = await fetch(`/api/interviews/${params.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 
       if (!response.ok) {
@@ -73,7 +76,12 @@ export default function InterviewPage({ params }: InterviewPageProps) {
 
       const data = await response.json();
       setCurrentInterview(data.interview);
-      setProjects(data.interview.skills?.projects || []);
+
+      const safeProjects = Array.isArray(data.interview?.skills?.projects)
+        ? data.interview.skills.projects
+        : [];
+
+      setProjects(safeProjects);
     } catch (error) {
       console.error(error);
       toast.error('Failed to load interview');
@@ -86,31 +94,36 @@ export default function InterviewPage({ params }: InterviewPageProps) {
   // ===== Complete Interview =====
   const handleComplete = async (answers: { questionId: string; answer: string; analysis: AnswerAnalysis }[]) => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
+      // store answers
       for (const answerData of answers) {
         await fetch(`/api/interviews/${params.id}/answers`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            ...(token && { Authorization: `Bearer ${token}` })
           },
           body: JSON.stringify({
             questionId: answerData.questionId,
             answer: answerData.answer,
-            score: answerData.analysis.score,
-            analysis: answerData.analysis
+            score: answerData.analysis?.score ?? null,
+            analysis: answerData.analysis || {}
           })
         });
       }
 
+      // mark interview complete
       const completeResponse = await fetch(`/api/interviews/${params.id}/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token && { Authorization: `Bearer ${token}` })
         },
-        body: JSON.stringify({ answers: answers, projects: projects })
+        body: JSON.stringify({
+          answers,
+          projects: Array.isArray(projects) ? projects : []
+        })
       });
 
       if (completeResponse.ok) {
@@ -156,7 +169,7 @@ export default function InterviewPage({ params }: InterviewPageProps) {
     );
   }
 
-  // ===== Ready to Start Interview =====
+  // ===== Everything Ready =====
   return (
     <AuthGuard>
       <VideoInterviewInterface
