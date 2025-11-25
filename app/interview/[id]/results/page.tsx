@@ -1,7 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRecoilState } from 'recoil';
@@ -15,11 +13,15 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, TrendingUp, TrendingDown, Award, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
+// ✅ Forces dynamic rendering
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 interface ResultsPageProps {
   params: { id: string };
 }
 
-function ResultsPage({ params }: ResultsPageProps) {
+export default function ResultsPage({ params }: ResultsPageProps) {
   const [currentInterview, setCurrentInterview] = useRecoilState(currentInterviewState);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -259,7 +261,3 @@ function ResultsPage({ params }: ResultsPageProps) {
     </AuthGuard>
   );
 }
-
-export default dynamic(() => Promise.resolve(ResultsPage), {
-  ssr: false,
-});

@@ -1,24 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Ignore ESLint errors during builds, safe for deployment
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // skip linting errors during build
   },
   images: {
-    // Disable Next.js image optimization (still safe for production)
-    unoptimized: true,
-  },
-  experimental: {
-    // Needed for dynamic server-side I/O (like reading files in API routes)
-    dynamicIO: true,
+    unoptimized: true, // disable built-in image optimization
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // Exclude server-only modules from the server bundle
+      // Exclude server-only modules from server bundle
       config.externals.push('pdf-parse');
     }
 
-    // Optional: prevent client-side accidental import of server-only modules
+    // Prevent client-side import of server-only modules
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -27,8 +21,10 @@ const nextConfig = {
 
     return config;
   },
-  // Recommended for production builds to avoid memory issues
-  productionBrowserSourceMaps: false,
+  productionBrowserSourceMaps: false, // reduce bundle size
+  experimental: {}, // no unused keys here
+  reactStrictMode: true, // recommended for catching issues early
+  swcMinify: true, // enable SWC minification for faster builds
 };
 
 module.exports = nextConfig;
