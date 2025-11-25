@@ -103,9 +103,15 @@ class VapiService {
     this.userAnswers = [];
 
     try {
-      const projectsList = projects
-        .map(p => `${p.title} (${p.technologies.join(', ')})`)
-        .join('; ');
+      const projectsList = Array.isArray(projects) && projects.length > 0
+        ? projects
+            .map(p => {
+              const title = p?.title || 'Untitled';
+              const techs = Array.isArray(p?.technologies) ? p.technologies : [];
+              return `${title} (${techs.join(', ')})`;
+            })
+            .join('; ')
+        : 'No valid projects found';
       
       const questionsList = questions
         .map((q, i) => `${i + 1}. ${q.questionText}`)
